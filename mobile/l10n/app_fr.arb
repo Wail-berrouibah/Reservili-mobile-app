@@ -1,0 +1,22 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Reservili",
+  "welcome": "Bienvenue sur Reservili",
+  "chooseLanguage": "Choisissez votre langue préférée",
+  "homes": "Logements",
+  "reservations": "Réservations",
+  "dashboard": "Tableau de bord",
+  "addHome": "Ajouter un logement",
+  "newReservation": "Nouvelle réservation",
+  "searchAvailability": "Rechercher disponibilité",
+  "settings": "Paramètres",
+  "noHomes": "Aucun logement",
+  "noReservations": "Aucune réservation",
+  "confirmed": "Confirmée",
+  "cancelled": "Annulée",
+  "rescheduled": "Reportée",
+  "bookNow": "Réserver maintenant",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "delete": "Supprimer"
+}

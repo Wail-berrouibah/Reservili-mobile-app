@@ -1,0 +1,22 @@
+{
+  "@@locale": "ar",
+  "appTitle": "Reservili",
+  "welcome": "مرحباً بك في Reservili",
+  "chooseLanguage": "اختر لغتك المفضلة",
+  "homes": "المنازل",
+  "reservations": "الحجوزات",
+  "dashboard": "لوحة التحكم",
+  "addHome": "إضافة منزل",
+  "newReservation": "حجز جديد",
+  "searchAvailability": "البحث عن التوفر",
+  "settings": "الإعدادات",
+  "noHomes": "لا توجد منازل",
+  "noReservations": "لا توجد حجوزات",
+  "confirmed": "مؤكد",
+  "cancelled": "ملغي",
+  "rescheduled": "معاد جدولته",
+  "bookNow": "احجز الآن",
+  "cancel": "إلغاء",
+  "save": "حفظ",
+  "delete": "حذف"
+}
