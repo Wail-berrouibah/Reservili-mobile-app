@@ -1,97 +1,95 @@
-import 'package:uuid/uuid.dart';
-import '../../core/utils/reservation_utils.dart';
-import 'guest_model.dart';
-import 'home_model.dart';
+enum ReservationStatus { pending, confirmed, cancelled }
 
 class ReservationModel {
   final String id;
   final String homeId;
-  final GuestModel guest;
-  final DateTime checkIn;
-  final DateTime checkOut;
+  final String guestId;
+  final DateTime checkInDate;
+  final DateTime checkOutDate;
+  final int guestsCount;
   final ReservationStatus status;
   final String? notes;
   final DateTime createdAt;
+  final DateTime updatedAt;
 
-  ReservationModel({
-    String? id,
+  const ReservationModel({
+    required this.id,
     required this.homeId,
-    required this.guest,
-    required this.checkIn,
-    required this.checkOut,
-    this.status = ReservationStatus.confirmed,
+    required this.guestId,
+    required this.checkInDate,
+    required this.checkOutDate,
+    required this.guestsCount,
+    this.status = ReservationStatus.pending,
     this.notes,
-    DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+    required this.createdAt,
+    required this.updatedAt,
+  });
 
-  int get nights => checkOut.difference(checkIn).inDays;
+  /// Number of nights for this reservation.
+  int get nights => checkOutDate.difference(checkInDate).inDays;
 
-  double get totalPrice {
-    return nights * home.pricePerNight;
+  /// A reservation still blocks a home unless it is cancelled.
+  bool get isActive => status != ReservationStatus.cancelled;
+
+  /// True if this reservation's dates overlap the given range.
+  bool overlaps(DateTime otherCheckIn, DateTime otherCheckOut) {
+    return checkInDate.isBefore(otherCheckOut) &&
+        checkOutDate.isAfter(otherCheckIn);
   }
 
-  late final HomeModel home;
+  factory ReservationModel.fromJson(Map<String, dynamic> json) =>
+      ReservationModel(
+        id: json['id'] as String,
+        homeId: json['homeId'] as String,
+        guestId: json['guestId'] as String,
+        checkInDate: DateTime.parse(json['checkInDate'] as String),
+        checkOutDate: DateTime.parse(json['checkOutDate'] as String),
+        guestsCount: json['guestsCount'] as int,
+        status: ReservationStatus.values.firstWhere(
+          (e) => e.name == json['status'],
+          orElse: () => ReservationStatus.pending,
+        ),
+        notes: json['notes'] as String?,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        updatedAt: DateTime.parse(json['updatedAt'] as String),
+      );
 
-  ReservationModel withHome(HomeModel homeModel) {
-    home = homeModel;
-    return this;
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'homeId': homeId,
+        'guestId': guestId,
+        'checkInDate': checkInDate.toIso8601String(),
+        'checkOutDate': checkOutDate.toIso8601String(),
+        'guestsCount': guestsCount,
+        'status': status.name,
+        'notes': notes,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
 
   ReservationModel copyWith({
     String? id,
     String? homeId,
-    GuestModel? guest,
-    DateTime? checkIn,
-    DateTime? checkOut,
+    String? guestId,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+    int? guestsCount,
     ReservationStatus? status,
     String? notes,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return ReservationModel(
       id: id ?? this.id,
       homeId: homeId ?? this.homeId,
-      guest: guest ?? this.guest,
-      checkIn: checkIn ?? this.checkIn,
-      checkOut: checkOut ?? this.checkOut,
+      guestId: guestId ?? this.guestId,
+      checkInDate: checkInDate ?? this.checkInDate,
+      checkOutDate: checkOutDate ?? this.checkOutDate,
+      guestsCount: guestsCount ?? this.guestsCount,
       status: status ?? this.status,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'homeId': homeId,
-      'guestName': guest.name,
-      'guestPhone': guest.phone,
-      'guestEmail': guest.email,
-      'checkIn': checkIn.toIso8601String(),
-      'checkOut': checkOut.toIso8601String(),
-      'status': status.name,
-      'notes': notes,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  factory ReservationModel.fromMap(Map<String, dynamic> map) {
-    return ReservationModel(
-      id: map['id'] as String,
-      homeId: map['homeId'] as String,
-      guest: GuestModel(
-        name: map['guestName'] as String,
-        phone: map['guestPhone'] as String?,
-        email: map['guestEmail'] as String?,
-      ),
-      checkIn: DateTime.parse(map['checkIn'] as String),
-      checkOut: DateTime.parse(map['checkOut'] as String),
-      status: ReservationStatus.values.firstWhere(
-        (s) => s.name == map['status'],
-        orElse: () => ReservationStatus.confirmed,
-      ),
-      notes: map['notes'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

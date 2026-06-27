@@ -1,52 +1,50 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../core/utils/reservation_utils.dart';
+import '../models/reservation_model.dart';
 
 class StatusBadge extends StatelessWidget {
   final ReservationStatus status;
-  final double fontSize;
-
-  const StatusBadge({
-    super.key,
-    required this.status,
-    this.fontSize = 12,
-  });
-
-  Color get _color {
-    switch (status) {
-      case ReservationStatus.confirmed:
-        return AppColors.confirmed;
-      case ReservationStatus.rescheduled:
-        return AppColors.rescheduled;
-      case ReservationStatus.cancelled:
-        return AppColors.cancelled;
-    }
-  }
-
-  Color get _bgColor {
-    return _color.withValues(alpha: 0.12);
-  }
+  const StatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
+    final config = _config(status);
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xxs,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: _bgColor,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        color: config.color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+        border: Border.all(color: config.color.withOpacity(0.4)),
       ),
       child: Text(
-        status.label,
+        config.label,
         style: TextStyle(
-          fontSize: fontSize,
+          color: config.color,
           fontWeight: FontWeight.w600,
-          color: _color,
+          fontSize: 12,
         ),
       ),
     );
   }
+
+  _BadgeConfig _config(ReservationStatus s) {
+    switch (s) {
+      case ReservationStatus.confirmed:
+        return const _BadgeConfig('Confirmée', AppColors.confirmed);
+      case ReservationStatus.cancelled:
+        return const _BadgeConfig('Annulée', AppColors.cancelled);
+      case ReservationStatus.pending:
+        return const _BadgeConfig('En attente', AppColors.pending);
+    }
+  }
+}
+
+class _BadgeConfig {
+  final String label;
+  final Color color;
+  const _BadgeConfig(this.label, this.color);
 }

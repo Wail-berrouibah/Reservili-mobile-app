@@ -1,3 +1,10 @@
 .idea/
 *.tar.gz
 *.gz
+node_modules/
+.vscode/
+build/
+dist/
+.env
+api/
+reservili/

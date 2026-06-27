@@ -1,46 +1,100 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:reservili/generated/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../../core/localization/language_provider.dart';
-import '../../core/localization/supported_locales.dart';
+
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../../shared/widgets/soft_card.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final locale = ref.watch(localeProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(t.settings)),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        children: [
+          SoftCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tile(
+                  icon: Icons.language,
+                  title: t.language,
+                  subtitle:
+                      locale.languageCode == 'ar' ? 'العربية' : 'Français',
+                  onTap: () => _showLanguageSheet(context, ref, locale),
+                ),
+                const Divider(height: 1),
+                _tile(
+                  icon: Icons.info_outline,
+                  title: t.about,
+                  subtitle: 'Reservili v1.0.0',
+                  onTap: () => showAboutDialog(
+                    context: context,
+                    applicationName: 'Reservili',
+                    applicationVersion: '1.0.0',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          TextButton.icon(
+            onPressed: () async {
+              await ref.read(authProvider.notifier).signOut();
+              if (context.mounted) context.go(AppRoutes.accessCode);
+            },
+            icon: const Icon(Icons.logout, color: AppColors.cancelled),
+            label: Text(t.signOut,
+                style: const TextStyle(color: AppColors.cancelled)),
+          ),
+        ],
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Settings')),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+    );
+  }
+
+  void _showLanguageSheet(
+      BuildContext context, WidgetRef ref, Locale current) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSectionHeader('Language'),
-            const SizedBox(height: AppSpacing.md),
-            _buildLanguageSection(context),
-            const SizedBox(height: AppSpacing.xxl),
-            _buildSectionHeader('About'),
-            const SizedBox(height: AppSpacing.md),
-            SoftCard(
-              child: Column(
-                children: [
-                  _buildSettingTile(Icons.info_outline, 'Version', '1.0.0'),
-                  const Divider(height: 1, indent: 56),
-                  _buildSettingTile(Icons.code_outlined, 'Built with', 'Flutter'),
-                  const Divider(height: 1, indent: 56),
-                  _buildSettingTile(Icons.palette_outlined, 'Design', 'Apple-style'),
-                ],
-              ),
+            ListTile(
+              title: const Text('Français'),
+              trailing: current.languageCode == 'fr'
+                  ? const Icon(Icons.check, color: AppColors.primary)
+                  : null,
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('fr'));
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('العربية'),
+              trailing: current.languageCode == 'ar'
+                  ? const Icon(Icons.check, color: AppColors.primary)
+                  : null,
+              onTap: () {
+                ref
+                    .read(localeProvider.notifier)
+                    .setLocale(const Locale('ar'));
+                Navigator.pop(context);
+              },
             ),
           ],
         ),
@@ -48,81 +102,18 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(title, style: AppTextStyles.title3);
-  }
-
-  Widget _buildLanguageSection(BuildContext context) {
-    final langProvider = context.watch<LanguageProvider>();
-    return SoftCard(
-      child: Column(
-        children: SupportedLocales.locales.map((locale) {
-          final isSelected = langProvider.locale == locale;
-          return Column(
-            children: [
-              if (locale != SupportedLocales.locales.first)
-                const Divider(height: 1, indent: 56),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _getFlag(locale.languageCode),
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  SupportedLocales.getLocaleName(locale),
-                  style: AppTextStyles.body,
-                ),
-                trailing: isSelected
-                    ? Icon(Icons.check_circle, color: AppColors.primary, size: 22)
-                    : null,
-                onTap: () {
-                  langProvider.setLocale(locale);
-                  context.pop();
-                },
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildSettingTile(IconData icon, String title, String subtitle) {
+  Widget _tile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
-      ),
-      title: Text(title, style: AppTextStyles.body),
-      trailing: Text(
-        subtitle,
-        style: AppTextStyles.footnote.copyWith(color: AppColors.textSecondary),
-      ),
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(title, style: AppTextStyles.bodyLarge),
+      subtitle: Text(subtitle, style: AppTextStyles.label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
     );
-  }
-
-  String _getFlag(String languageCode) {
-    switch (languageCode) {
-      case 'en': return '🇬🇧';
-      case 'fr': return '🇫🇷';
-      case 'ar': return '🇸🇦';
-      default: return '🌐';
-    }
   }
 }

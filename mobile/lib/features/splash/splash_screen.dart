@@ -1,70 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_text_styles.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToNext();
+    _bootstrap();
   }
 
-  Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
-    if (mounted) {
-      context.go('/language');
+  Future<void> _bootstrap() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedLocale = prefs.getString('app_locale');
+    final token = prefs.getString('auth_token');
+
+    if (!mounted) return;
+    if (savedLocale == null) {
+      context.go(AppRoutes.language);
+    } else if (token != null) {
+      context.go(AppRoutes.dashboard);
+    } else {
+      context.go(AppRoutes.accessCode);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primary,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 100,
-              height: 100,
+              height: 96,
+              width: 96,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: Colors.white.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               ),
-              child: const Center(
-                child: Text(
-                  'R',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              child: const Icon(Icons.home_rounded,
+                  color: Colors.white, size: 48),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            const Text(
-              'Reservili',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Reservili',
+                style:
+                    AppTextStyles.displayLarge.copyWith(color: Colors.white)),
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Home Reservation Manager',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
+            Text('Gestion des réservations',
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: Colors.white.withOpacity(0.8))),
+            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(
+              height: 26,
+              width: 26,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                valueColor: AlwaysStoppedAnimation(AppColors.accent),
               ),
             ),
           ],

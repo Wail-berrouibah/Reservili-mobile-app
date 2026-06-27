@@ -1,112 +1,59 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
+/// Typography for Reservili (works for LTR French + RTL Arabic).
 class AppTextStyles {
   AppTextStyles._();
 
-  static const String _fontFamily = '.SF Pro Display';
+  static const TextStyle displayLarge = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.2,
+  );
 
-  static TextStyle get largeTitle => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 34,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.2,
-      );
+  static const TextStyle headingLarge = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.25,
+  );
 
-  static TextStyle get title1 => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  static const TextStyle headingMedium = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
 
-  static TextStyle get title2 => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  static const TextStyle titleMedium = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
 
-  static TextStyle get title3 => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  static const TextStyle bodyLarge = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+    height: 1.4,
+  );
 
-  static TextStyle get headline => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.4,
-      );
+  static const TextStyle bodyMedium = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+    height: 1.4,
+  );
 
-  static TextStyle get body => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 17,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
-      );
+  static const TextStyle label = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+  );
 
-  static TextStyle get callout => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
-      );
-
-  static TextStyle get subheadline => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.4,
-      );
-
-  static TextStyle get footnote => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.4,
-      );
-
-  static TextStyle get caption1 => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.3,
-      );
-
-  static TextStyle get caption2 => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textTertiary,
-        height: 1.3,
-      );
-
-  static TextStyle get button => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-        height: 1.4,
-      );
-
-  static TextStyle get buttonSmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-        height: 1.4,
-      );
+  static const TextStyle button = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textOnPrimary,
+  );
 }

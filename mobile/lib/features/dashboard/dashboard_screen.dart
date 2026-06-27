@@ -1,290 +1,157 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:reservili/generated/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/utils/date_utils.dart' as du;
 import '../../providers/homes_provider.dart';
 import '../../providers/reservations_provider.dart';
+import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/reservation_card.dart';
 import 'widgets/dashboard_stat_card.dart';
 import 'widgets/quick_action_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.xxl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: AppSpacing.xxl),
-                _buildStatsRow(context),
-                const SizedBox(height: AppSpacing.xxl),
-                _buildQuickActions(context),
-                const SizedBox(height: AppSpacing.xxl),
-                _buildUpcomingSection(context),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final homesAsync = ref.watch(homesProvider);
+    final reservationsAsync = ref.watch(reservationsProvider);
 
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome back!',
-              style: AppTextStyles.title2,
-            ),
-            const SizedBox(height: AppSpacing.xxs),
-            Text(
-              'Manage your home reservations',
-              style: AppTextStyles.subheadline,
-            ),
-          ],
-        ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: const Icon(Icons.settings_outlined, size: 20),
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsRow(BuildContext context) {
-    final homesProvider = context.watch<HomesProvider>();
-    final reservationsProvider = context.watch<ReservationsProvider>();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 400;
-        final children = [
-          Expanded(
-            child: DashboardStatCard(
-              label: 'Total Homes',
-              value: '${homesProvider.totalHomes}',
-              icon: Icons.home_outlined,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: DashboardStatCard(
-              label: 'Available',
-              value: '${homesProvider.availableHomes}',
-              icon: Icons.check_circle_outline,
-              color: AppColors.success,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: DashboardStatCard(
-              label: 'Upcoming',
-              value: '${reservationsProvider.upcomingCount}',
-              icon: Icons.calendar_today_outlined,
-              color: AppColors.warning,
-            ),
-          ),
-        ];
-
-        if (isWide) {
-          return Row(children: children);
-        }
-        return Row(children: children);
-      },
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Quick Actions', style: AppTextStyles.title3),
-        const SizedBox(height: AppSpacing.lg),
-        Row(
-          children: [
-            Expanded(
-              child: QuickActionCard(
-                label: 'Browse\nHomes',
-                icon: Icons.search_outlined,
-                color: AppColors.primary,
-                onTap: () => context.go('/homes'),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: QuickActionCard(
-                label: 'New\nReservation',
-                icon: Icons.add_circle_outline,
-                color: AppColors.success,
-                onTap: () => context.push('/reservations/create'),
-              ),
-            ),
-            Expanded(
-              child: QuickActionCard(
-                label: 'Check\nAvailability',
-                icon: Icons.event_available_outlined,
-                color: AppColors.warning,
-                onTap: () => context.push('/availability'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUpcomingSection(BuildContext context) {
-    final reservationsProvider = context.watch<ReservationsProvider>();
-    final upcoming = reservationsProvider.upcomingReservations;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Upcoming Reservations', style: AppTextStyles.title3),
-            if (upcoming.isNotEmpty)
-              GestureDetector(
-                onTap: () => context.go('/reservations'),
-                child: Text(
-                  'See All',
-                  style: AppTextStyles.callout.copyWith(color: AppColors.primary),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        if (upcoming.isEmpty)
-          _buildEmptyUpcoming()
-        else
-          ...upcoming.take(3).map((r) => _buildUpcomingCard(context, r)),
-      ],
-    );
-  }
-
-  Widget _buildEmptyUpcoming() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.event_busy_outlined, size: 40, color: AppColors.textTertiary),
-          const SizedBox(height: AppSpacing.md),
-          Text('No upcoming reservations', style: AppTextStyles.callout),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Create your first reservation to get started',
-            style: AppTextStyles.footnote,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(t.appTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildUpcomingCard(BuildContext context, dynamic reservation) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
-            child: const Center(
-              child: Icon(Icons.person_outline, color: AppColors.primary, size: 22),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(homesProvider);
+          ref.invalidate(reservationsProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            Text(t.dashboard, style: AppTextStyles.headingLarge),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
               children: [
-                Text(
-                  reservation.guest.name,
-                  style: AppTextStyles.headline,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: DashboardStatCard(
+                    icon: Icons.home_work_outlined,
+                    label: t.homes,
+                    value: homesAsync.maybeWhen(
+                      data: (h) => '${h.length}',
+                      orElse: () => '—',
+                    ),
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  du.DateUtils.formatDateRange(reservation.checkIn, reservation.checkOut),
-                  style: AppTextStyles.footnote,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: DashboardStatCard(
+                    icon: Icons.event_available_outlined,
+                    label: t.reservations,
+                    color: AppColors.accent,
+                    value: reservationsAsync.maybeWhen(
+                      data: (r) => '${r.where((e) => e.isActive).length}',
+                      orElse: () => '—',
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
-            decoration: BoxDecoration(
-              color: AppColors.confirmed.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            const SizedBox(height: AppSpacing.lg),
+            Text(t.quickActions, style: AppTextStyles.titleMedium),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: QuickActionCard(
+                    icon: Icons.search,
+                    label: t.availability,
+                    onTap: () => context.push(AppRoutes.availability),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: QuickActionCard(
+                    icon: Icons.add_home_outlined,
+                    label: t.add,
+                    onTap: () => context.push(AppRoutes.addHome),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: QuickActionCard(
+                    icon: Icons.list_alt_outlined,
+                    label: t.reservations,
+                    onTap: () => context.push(AppRoutes.reservations),
+                  ),
+                ),
+              ],
             ),
-            child: Text(
-              '${reservation.nights} ngt',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.confirmed,
+            const SizedBox(height: AppSpacing.xl),
+            Text(t.recentReservations, style: AppTextStyles.titleMedium),
+            const SizedBox(height: AppSpacing.md),
+            reservationsAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.xl),
+                  child: CircularProgressIndicator(),
+                ),
               ),
+              error: (e, _) => Text('$e'),
+              data: (reservations) {
+                final active = reservations.where((r) => r.isActive).toList()
+                  ..sort((a, b) => a.checkInDate.compareTo(b.checkInDate));
+
+                if (active.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.event_busy_outlined,
+                    title: t.noReservations,
+                    message: t.upcomingReservationsHint,
+                  );
+                }
+
+                final homes = homesAsync.asData?.value ?? [];
+                return Column(
+                  children: active.take(5).map((r) {
+                    final match = homes.where((h) => h.id == r.homeId);
+                    final homeName =
+                        match.isNotEmpty ? match.first.name : t.home;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: ReservationCard(
+                        reservation: r,
+                        homeName: homeName,
+                        guestName: t.client,
+                        onTap: () => context.push(
+                          AppRoutes.reservationDetails,
+                          extra: r.id,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRoutes.availability),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add),
+        label: Text(t.book),
       ),
     );
   }

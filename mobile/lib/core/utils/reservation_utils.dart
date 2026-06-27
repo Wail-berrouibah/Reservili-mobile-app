@@ -1,43 +1,39 @@
-enum ReservationStatus {
-  confirmed,
-  rescheduled,
-  cancelled;
+import '../../shared/models/reservation_model.dart';
 
-  String get label {
-    switch (this) {
-      case ReservationStatus.confirmed:
-        return 'Confirmed';
-      case ReservationStatus.rescheduled:
-        return 'Rescheduled';
-      case ReservationStatus.cancelled:
-        return 'Cancelled';
-    }
-  }
-
-  String get localizedLabel {
-    switch (this) {
-      case ReservationStatus.confirmed:
-        return 'Confirmée';
-      case ReservationStatus.rescheduled:
-        return 'Reportée';
-      case ReservationStatus.cancelled:
-        return 'Annulée';
-    }
-  }
-}
-
+/// Core booking rules: a home cannot have two active reservations
+/// that overlap on the same dates.
 class ReservationUtils {
   ReservationUtils._();
 
-  static String formatStatus(ReservationStatus status) {
-    return status.label;
+  /// [hasOverlap] with pre-filtered list (no homeId / ignoreReservationId).
+  static bool hasOverlap(
+    List<ReservationModel> reservations,
+    DateTime checkIn,
+    DateTime checkOut,
+  ) {
+    for (final r in reservations) {
+      if (!r.isActive) continue;
+      if (r.checkInDate.isBefore(checkOut) &&
+          r.checkOutDate.isAfter(checkIn)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  static bool canReschedule(ReservationStatus status) {
-    return status == ReservationStatus.confirmed;
+  /// A home is available when there is no overlapping active reservation.
+  static bool isHomeAvailable(
+    List<ReservationModel> reservations,
+    String homeId,
+    DateTime checkIn,
+    DateTime checkOut,
+  ) {
+    final homeReservations = reservations.where((r) => r.homeId == homeId);
+    return !hasOverlap(homeReservations.toList(), checkIn, checkOut);
   }
 
-  static bool canCancel(ReservationStatus status) {
-    return status != ReservationStatus.cancelled;
+  /// Basic guard for valid date ranges (check-in must be before check-out).
+  static bool isValidRange(DateTime checkIn, DateTime checkOut) {
+    return checkIn.isBefore(checkOut);
   }
 }

@@ -5,34 +5,22 @@ import '../../core/theme/app_text_styles.dart';
 
 class AppTextField extends StatelessWidget {
   final String label;
-  final String? hint;
-  final TextEditingController? controller;
+  final TextEditingController controller;
   final String? Function(String?)? validator;
-  final TextInputType keyboardType;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final String? hint;
   final bool obscureText;
-  final int? maxLines;
-  final int? maxLength;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
-  final bool enabled;
-  final String? initialValue;
-  final ValueChanged<String>? onChanged;
 
   const AppTextField({
     super.key,
     required this.label,
-    this.hint,
-    this.controller,
+    required this.controller,
     this.validator,
-    this.keyboardType = TextInputType.text,
-    this.obscureText = false,
+    this.keyboardType,
     this.maxLines = 1,
-    this.maxLength,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.enabled = true,
-    this.initialValue,
-    this.onChanged,
+    this.hint,
+    this.obscureText = false,
   });
 
   @override
@@ -40,25 +28,35 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.footnote.copyWith(color: AppColors.textSecondary)),
-        const SizedBox(height: AppSpacing.xs),
+        Text(label, style: AppTextStyles.label),
+        const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: controller,
-          initialValue: initialValue,
           validator: validator,
           keyboardType: keyboardType,
+          maxLines: obscureText ? 1 : maxLines,
           obscureText: obscureText,
-          maxLines: maxLines,
-          maxLength: maxLength,
-          enabled: enabled,
-          onChanged: onChanged,
-          style: AppTextStyles.body,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTextStyles.subheadline,
-            prefixIcon: prefixIcon,
-            suffixIcon: suffixIcon,
-            counterText: '',
+            filled: true,
+            fillColor: AppColors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.md,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.6),
+            ),
           ),
         ),
       ],

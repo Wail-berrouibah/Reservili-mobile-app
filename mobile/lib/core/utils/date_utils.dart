@@ -1,53 +1,25 @@
 import 'package:intl/intl.dart';
 
-class DateUtils {
-  DateUtils._();
+class AppDateUtils {
+  AppDateUtils._();
 
-  static String formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
-  }
+  static String formatShort(DateTime date) =>
+      DateFormat('dd MMM yyyy').format(date);
 
-  static String formatDateShort(DateTime date) {
-    return DateFormat('MM/dd/yyyy').format(date);
-  }
+  static String formatDay(DateTime date) =>
+      DateFormat('dd MMM').format(date);
 
-  static String formatDateRange(DateTime start, DateTime end) {
-    return '${formatDate(start)} - ${formatDate(end)}';
-  }
+  static String formatFull(DateTime date) =>
+      DateFormat('EEEE dd MMMM yyyy').format(date);
 
-  static String formatTime(DateTime date) {
-    return DateFormat('hh:mm a').format(date);
-  }
+  static int nightsBetween(DateTime checkIn, DateTime checkOut) =>
+      checkOut.difference(checkIn).inDays;
 
-  static String formatDayMonth(DateTime date) {
-    return DateFormat('EEE, MMM dd').format(date);
-  }
+  static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  static int nightsBetween(DateTime start, DateTime end) {
-    return end.difference(start).inDays;
-  }
+  static bool isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
-  static bool isOverlapping(
-    DateTime start1,
-    DateTime end1,
-    DateTime start2,
-    DateTime end2,
-  ) {
-    return start1.isBefore(end2) && start2.isBefore(end1);
-  }
-
-  static bool isInPast(DateTime date) {
-    return date.isBefore(DateTime.now());
-  }
-
-  static bool isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  static bool isUpcoming(DateTime date) {
-    return date.isAfter(DateTime.now());
-  }
+  static String rangeLabel(DateTime checkIn, DateTime checkOut) =>
+      '${formatDay(checkIn)} → ${formatDay(checkOut)}';
 }

@@ -1,41 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'core/localization/language_provider.dart';
-import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
-import 'core/localization/supported_locales.dart';
-import 'providers/homes_provider.dart';
-import 'providers/reservations_provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:reservili/generated/app_localizations.dart';
 
-class App extends StatelessWidget {
-  const App({super.key});
+import 'core/notifications/reservation_reminder_scheduler.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'providers/homes_provider.dart';
+import 'providers/locale_provider.dart';
+import 'providers/reservations_provider.dart';
+
+class ReserviliApp extends ConsumerWidget {
+  const ReserviliApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HomesProvider()..loadMockData()),
-        ChangeNotifierProvider(create: (_) => ReservationsProvider()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
-      ],
-      child: Consumer<LanguageProvider>(
-        builder: (context, langProvider, _) {
-          return MaterialApp.router(
-            title: 'Reservili',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            routerConfig: AppRouter.router,
-            supportedLocales: SupportedLocales.locales,
-            locale: langProvider.locale,
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-          );
-        },
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
+    return MaterialApp.router(
+      title: 'Reservili',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      routerConfig: appRouter,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, child) =>
+          _ReminderSync(child: child ?? const SizedBox.shrink()),
     );
+  }
+}
+
+class _ReminderSync extends ConsumerWidget {
+  final Widget child;
+  const _ReminderSync({required this.child});
+
+  void _sync(WidgetRef ref, AppLocalizations t) {
+    final reservations = ref.read(reservationsProvider).asData?.value;
+    final homes = ref.read(homesProvider).asData?.value;
+    if (reservations != null && homes != null) {
+      ReservationReminderScheduler.sync(
+        reservations: reservations,
+        homes: homes,
+        t: t,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    ref.listen(reservationsProvider, (_, __) => _sync(ref, t));
+    ref.listen(homesProvider, (_, __) => _sync(ref, t));
+    return child;
   }
 }

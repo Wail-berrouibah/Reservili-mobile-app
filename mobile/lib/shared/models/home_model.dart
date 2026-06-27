@@ -1,75 +1,64 @@
+enum HomeStatus { available, unavailable }
+
 class HomeModel {
   final String id;
   final String name;
-  final String description;
-  final String address;
+  final String location;
+  final int capacity;
   final double pricePerNight;
-  final int maxGuests;
-  final String? imageUrl;
-  final bool isAvailable;
-  final DateTime createdAt;
+  final HomeStatus status;
+  final String? image;
 
-  HomeModel({
+  const HomeModel({
     required this.id,
     required this.name,
-    required this.description,
-    required this.address,
+    required this.location,
+    required this.capacity,
     required this.pricePerNight,
-    required this.maxGuests,
-    this.imageUrl,
-    this.isAvailable = true,
-    DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    this.status = HomeStatus.available,
+    this.image,
+  });
+
+  factory HomeModel.fromJson(Map<String, dynamic> json) => HomeModel(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        location: json['location'] as String,
+        capacity: (json['capacity'] as num).toInt(),
+        pricePerNight: (json['pricePerNight'] as num).toDouble(),
+        status: HomeStatus.values.firstWhere(
+          (e) => e.name == json['status'],
+          orElse: () => HomeStatus.available,
+        ),
+        image: json['image'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'location': location,
+        'capacity': capacity,
+        'pricePerNight': pricePerNight,
+        'status': status.name,
+        'image': image,
+      };
 
   HomeModel copyWith({
     String? id,
     String? name,
-    String? description,
-    String? address,
+    String? location,
+    int? capacity,
     double? pricePerNight,
-    int? maxGuests,
-    String? imageUrl,
-    bool? isAvailable,
-    DateTime? createdAt,
+    HomeStatus? status,
+    String? image,
   }) {
     return HomeModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      description: description ?? this.description,
-      address: address ?? this.address,
+      location: location ?? this.location,
+      capacity: capacity ?? this.capacity,
       pricePerNight: pricePerNight ?? this.pricePerNight,
-      maxGuests: maxGuests ?? this.maxGuests,
-      imageUrl: imageUrl ?? this.imageUrl,
-      isAvailable: isAvailable ?? this.isAvailable,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'address': address,
-      'pricePerNight': pricePerNight,
-      'maxGuests': maxGuests,
-      'imageUrl': imageUrl,
-      'isAvailable': isAvailable ? 1 : 0,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  factory HomeModel.fromMap(Map<String, dynamic> map) {
-    return HomeModel(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      description: map['description'] as String,
-      address: map['address'] as String,
-      pricePerNight: (map['pricePerNight'] as num).toDouble(),
-      maxGuests: map['maxGuests'] as int,
-      imageUrl: map['imageUrl'] as String?,
-      isAvailable: (map['isAvailable'] as int) == 1,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      status: status ?? this.status,
+      image: image ?? this.image,
     );
   }
 }

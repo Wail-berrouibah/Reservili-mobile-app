@@ -1,121 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../../core/localization/language_provider.dart';
-import '../../core/localization/supported_locales.dart';
+
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../providers/locale_provider.dart';
 import '../../shared/widgets/soft_card.dart';
 
-class LanguageScreen extends StatelessWidget {
+class LanguageScreen extends ConsumerWidget {
   const LanguageScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'R',
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                Text(
-                  'Welcome to Reservili',
-                  style: AppTextStyles.largeTitle,
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              const Icon(Icons.translate,
+                  size: 56, color: AppColors.primary),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Choisissez votre langue',
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Choose your preferred language',
-                  style: AppTextStyles.subheadline,
+                  style: AppTextStyles.displayLarge),
+              const SizedBox(height: AppSpacing.sm),
+              Text('اختر لغتك',
                   textAlign: TextAlign.center,
-                ),
-                const Spacer(flex: 1),
-                ...SupportedLocales.locales.map(
-                  (locale) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: SoftCard(
-                      onTap: () {
-                        context.read<LanguageProvider>().setLocale(locale);
-                        context.go('/dashboard');
-                      },
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                            ),
-                            child: Center(
-                              child: Text(
-                                _getFlag(locale.languageCode),
-                                style: const TextStyle(fontSize: 24),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.lg),
-                          Text(
-                            SupportedLocales.getLocaleName(locale),
-                            style: AppTextStyles.headline,
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.chevron_right,
-                            color: AppColors.textTertiary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const Spacer(flex: 2),
-              ],
-            ),
+                  style: AppTextStyles.bodyMedium),
+              const SizedBox(height: AppSpacing.xxl),
+              _option(context, ref, const Locale('fr'), 'Français', '🇫🇷'),
+              const SizedBox(height: AppSpacing.md),
+              _option(context, ref, const Locale('ar'), 'العربية', '🇩🇿'),
+              const Spacer(),
+            ],
           ),
         ),
       ),
     );
   }
 
-  String _getFlag(String languageCode) {
-    switch (languageCode) {
-      case 'en':
-        return '🇬🇧';
-      case 'fr':
-        return '🇫🇷';
-      case 'ar':
-        return '🇸🇦';
-      default:
-        return '🌐';
-    }
+  Widget _option(BuildContext context, WidgetRef ref, Locale locale,
+      String label, String flag) {
+    return SoftCard(
+      onTap: () async {
+        await ref.read(localeProvider.notifier).setLocale(locale);
+        if (context.mounted) context.go(AppRoutes.accessCode);
+      },
+      child: Row(
+        children: [
+          Text(flag, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(child: Text(label, style: AppTextStyles.bodyLarge)),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+    );
   }
 }

@@ -1,119 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:reservili/generated/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../shared/widgets/home_card.dart';
-import '../../shared/widgets/empty_state.dart';
 import '../../providers/homes_provider.dart';
+import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/home_card.dart';
 
-class HomesScreen extends StatefulWidget {
+class HomesScreen extends ConsumerWidget {
   const HomesScreen({super.key});
 
   @override
-  State<HomesScreen> createState() => _HomesScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final homesAsync = ref.watch(homesProvider);
 
-class _HomesScreenState extends State<HomesScreen> {
-  final _searchController = TextEditingController();
-  bool _isSearching = false;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: _isSearching
-              ? TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Search by name or address...',
-                    border: InputBorder.none,
-                    filled: false,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  style: AppTextStyles.body,
-                  onChanged: (_) => setState(() {}),
-                )
-              : const Text('Homes'),
-          actions: [
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching;
-                  if (!_isSearching) _searchController.clear();
-                });
-              },
-              icon: Icon(_isSearching ? Icons.close : Icons.search_outlined),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            final result = await context.push<bool>('/homes/add');
-            if (result == true && mounted) setState(() {});
-          },
-          child: const Icon(Icons.add),
-        ),
-        body: Consumer<HomesProvider>(
-          builder: (context, provider, _) {
-            final query = _searchController.text.trim();
-            final homes = _isSearching && query.isNotEmpty
-                ? provider.searchHomes(query)
-                : provider.homes;
-
-            if (provider.homes.isEmpty) {
-              return EmptyState(
-                icon: Icons.home_outlined,
-                title: 'No homes yet',
-                subtitle: 'Add your first home to get started',
-                actionLabel: 'Add Home',
-                onAction: () async {
-                  final result = await context.push<bool>('/homes/add');
-                  if (result == true && mounted) setState(() {});
-                },
-              );
-            }
-
+    return Scaffold(
+      appBar: AppBar(title: Text(t.homes)),
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(homesProvider),
+        child: homesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (homes) {
             if (homes.isEmpty) {
-              return EmptyState(
-                icon: Icons.search_off_outlined,
-                title: 'No results',
-                subtitle: 'Try a different search term',
+              return ListView(
+                children: [
+                  const SizedBox(height: 120),
+                  EmptyState(
+                    icon: Icons.home_outlined,
+                    title: t.noHomes,
+                    message: t.addFirstHome,
+                  ),
+                ],
               );
             }
-
-            return RefreshIndicator(
-              onRefresh: () async => setState(() {}),
-              child: ListView.builder(
-                padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 80),
-                itemCount: homes.length,
-                itemBuilder: (context, index) {
-                  final home = homes[index];
-                  return HomeCard(
-                    home: home,
-                    onTap: () => context.push('/homes/${home.id}'),
-                  );
-                },
-              ),
+            return ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              itemCount: homes.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.md),
+              itemBuilder: (_, i) {
+                final home = homes[i];
+                return HomeCard(
+                  home: home,
+                  onTap: () => context.push(
+                    AppRoutes.homeDetails,
+                    extra: home.id,
+                  ),
+                );
+              },
             );
           },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        onPressed: () => context.push(AppRoutes.addHome),
+        child: const Icon(Icons.add),
       ),
     );
   }
