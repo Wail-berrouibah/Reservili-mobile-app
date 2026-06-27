@@ -45,29 +45,32 @@ class MockData {
     ),
   ];
 
-  static final List<ReservationModel> reservations = [
-    ReservationModel(
-      id: 'r1',
-      homeId: 'h1',
-      guestId: 'g1',
-      checkInDate: DateTime.now().add(const Duration(days: 2)),
-      checkOutDate: DateTime.now().add(const Duration(days: 5)),
-      guestsCount: 4,
-      status: ReservationStatus.confirmed,
-      notes: 'Arrivée tôt le matin.',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-    ReservationModel(
-      id: 'r2',
-      homeId: 'h2',
-      guestId: 'g2',
-      checkInDate: DateTime.now().add(const Duration(days: 7)),
-      checkOutDate: DateTime.now().add(const Duration(days: 9)),
-      guestsCount: 2,
-      status: ReservationStatus.pending,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-  ];
+  static List<ReservationModel> reservations() {
+    final now = DateTime.now();
+    return [
+      ReservationModel(
+        id: 'r1',
+        homeId: 'h1',
+        guestId: 'g1',
+        checkInDate: now.add(const Duration(days: 2)),
+        checkOutDate: now.add(const Duration(days: 5)),
+        guestsCount: 4,
+        status: ReservationStatus.confirmed,
+        notes: 'Arrivée tôt le matin.',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      ReservationModel(
+        id: 'r2',
+        homeId: 'h2',
+        guestId: 'g2',
+        checkInDate: now.add(const Duration(days: 7)),
+        checkOutDate: now.add(const Duration(days: 9)),
+        guestsCount: 2,
+        status: ReservationStatus.pending,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
 }

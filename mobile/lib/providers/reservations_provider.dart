@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../shared/models/home_model.dart';
 import '../shared/models/reservation_model.dart';
+import 'guests_provider.dart';
 import 'repository_provider.dart';
 
 class DateRange {
@@ -51,6 +52,7 @@ class ReservationsNotifier extends AsyncNotifier<List<ReservationModel>> {
       guestsCount: guestsCount,
       notes: notes,
     );
+    ref.invalidate(guestsProvider);
     ref.invalidateSelf();
     await future;
   }
@@ -66,6 +68,13 @@ class ReservationsNotifier extends AsyncNotifier<List<ReservationModel>> {
       String id, DateTime checkIn, DateTime checkOut) async {
     final repo = ref.read(repositoryProvider);
     await repo.reschedule(id, checkIn, checkOut);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> deleteReservation(String id) async {
+    final repo = ref.read(repositoryProvider);
+    await repo.deleteReservation(id);
     ref.invalidateSelf();
     await future;
   }

@@ -7,6 +7,7 @@ import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/homes/homes_screen.dart';
 import '../../features/homes/add_home_screen.dart';
 import '../../features/homes/home_details_screen.dart';
+import '../../shared/models/home_model.dart';
 import '../../features/availability/search_availability_screen.dart';
 import '../../features/reservations/reservations_screen.dart';
 import '../../features/reservations/create_reservation_screen.dart';
@@ -45,7 +46,9 @@ final appRouter = GoRouter(
         builder: (_, __) => const DashboardScreen()),
     GoRoute(path: AppRoutes.homes, builder: (_, __) => const HomesScreen()),
     GoRoute(
-        path: AppRoutes.addHome, builder: (_, __) => const AddHomeScreen()),
+        path: AppRoutes.addHome,
+        builder: (_, state) =>
+            AddHomeScreen(home: state.extra as HomeModel?)),
     GoRoute(
       path: AppRoutes.homeDetails,
       builder: (_, state) => HomeDetailsScreen(homeId: state.extra as String),

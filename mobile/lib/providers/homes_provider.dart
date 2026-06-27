@@ -19,4 +19,18 @@ class HomesNotifier extends AsyncNotifier<List<HomeModel>> {
     ref.invalidateSelf();
     await future;
   }
+
+  Future<void> updateHome(HomeModel home) async {
+    final repo = ref.read(repositoryProvider);
+    await repo.updateHome(home);
+    ref.invalidateSelf();
+    await future;
+  }
+
+  Future<void> deleteHome(String id) async {
+    final repo = ref.read(repositoryProvider);
+    await repo.deleteHome(id);
+    ref.invalidateSelf();
+    await future;
+  }
 }

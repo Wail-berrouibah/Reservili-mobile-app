@@ -15,6 +15,32 @@ class HomeDetailsScreen extends ConsumerWidget {
   final String homeId;
   const HomeDetailsScreen({super.key, required this.homeId});
 
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, AppLocalizations t) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer le logement ?'),
+        content: const Text('Cette action est définitive.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t.no),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer',
+                style: TextStyle(color: AppColors.cancelled)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(homesProvider.notifier).deleteHome(homeId);
+      if (context.mounted) context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
@@ -78,6 +104,23 @@ class HomeDetailsScreen extends ConsumerWidget {
                   AppRoutes.createReservation,
                   extra: home.id,
                 ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PrimaryButton(
+                label: 'Modifier',
+                variant: ButtonVariant.secondary,
+                icon: Icons.edit_outlined,
+                onPressed: () => context.push(
+                  AppRoutes.addHome,
+                  extra: home,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PrimaryButton(
+                label: 'Supprimer',
+                variant: ButtonVariant.danger,
+                icon: Icons.delete_outline,
+                onPressed: () => _confirmDelete(context, ref, t),
               ),
             ],
           );

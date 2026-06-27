@@ -9,6 +9,7 @@ class DashboardStatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
+  final VoidCallback? onTap;
 
   const DashboardStatCard({
     super.key,
@@ -16,12 +17,14 @@ class DashboardStatCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final accent = color ?? AppColors.primary;
     return SoftCard(
+      onTap: onTap,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

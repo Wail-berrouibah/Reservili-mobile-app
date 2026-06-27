@@ -11,7 +11,8 @@ import '../../shared/widgets/app_text_field.dart';
 import '../../shared/widgets/primary_button.dart';
 
 class AddHomeScreen extends ConsumerStatefulWidget {
-  const AddHomeScreen({super.key});
+  final HomeModel? home;
+  const AddHomeScreen({super.key, this.home});
 
   @override
   ConsumerState<AddHomeScreen> createState() => _AddHomeScreenState();
@@ -26,6 +27,18 @@ class _AddHomeScreenState extends ConsumerState<AddHomeScreen> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    final h = widget.home;
+    if (h != null) {
+      _name.text = h.name;
+      _location.text = h.location;
+      _capacity.text = h.capacity.toString();
+      _price.text = h.pricePerNight.toStringAsFixed(0);
+    }
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _location.dispose();
@@ -38,25 +51,32 @@ class _AddHomeScreenState extends ConsumerState<AddHomeScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    final existing = widget.home;
+    final id = existing?.id ?? 'h${DateTime.now().millisecondsSinceEpoch}';
     final home = HomeModel(
-      id: 'h${DateTime.now().millisecondsSinceEpoch}',
+      id: id,
       name: _name.text.trim(),
       location: _location.text.trim(),
       capacity: int.parse(_capacity.text.trim()),
       pricePerNight: double.parse(_price.text.trim()),
-      status: HomeStatus.available,
+      status: existing?.status ?? HomeStatus.available,
     );
 
-    await ref.read(homesProvider.notifier).addHome(home);
+    if (existing != null) {
+      await ref.read(homesProvider.notifier).updateHome(home);
+    } else {
+      await ref.read(homesProvider.notifier).addHome(home);
+    }
     if (mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final isEditing = widget.home != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.addHome)),
+      appBar: AppBar(title: Text(isEditing ? t.homeDetails : t.addHome)),
       body: Form(
         key: _formKey,
         child: ListView(

@@ -22,8 +22,10 @@ class LocalRepository {
   void _seedIfEmpty() {
     if (!_box.containsKey(_kHomes)) {
       _writeHomes(MockData.homes);
+      _writeReservations(MockData.reservations());
+    }
+    if (!_box.containsKey(_kGuests)) {
       _writeGuests(MockData.guests);
-      _writeReservations(MockData.reservations);
     }
   }
 
@@ -71,6 +73,9 @@ class LocalRepository {
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
+  // ---------- Guests ----------
+  Future<List<GuestModel>> getGuests() async => _readGuests();
+
   // ---------- Homes ----------
   Future<List<HomeModel>> getHomes() async => _readHomes();
 
@@ -89,6 +94,20 @@ class LocalRepository {
     final homes = _readHomes()..add(home);
     _writeHomes(homes);
     return home;
+  }
+
+  Future<HomeModel> updateHome(HomeModel home) async {
+    final homes = _readHomes();
+    final idx = homes.indexWhere((h) => h.id == home.id);
+    if (idx == -1) throw Exception('HOME_NOT_FOUND');
+    homes[idx] = home;
+    _writeHomes(homes);
+    return home;
+  }
+
+  Future<void> deleteHome(String id) async {
+    final homes = _readHomes()..removeWhere((h) => h.id == id);
+    _writeHomes(homes);
   }
 
   // ---------- Reservations ----------
@@ -185,5 +204,10 @@ class LocalRepository {
     );
     _writeReservations(reservations);
     return reservations[idx];
+  }
+
+  Future<void> deleteReservation(String id) async {
+    final reservations = _readReservations()..removeWhere((r) => r.id == id);
+    _writeReservations(reservations);
   }
 }
