@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -16,6 +18,15 @@ class NotificationService {
       'Notifications pour les réservations qui se terminent bientôt';
 
   bool _initialized = false;
+  String? _pendingPayload;
+
+  static void Function(String? payload)? onNotificationTap;
+
+  String? consumePendingPayload() {
+    final p = _pendingPayload;
+    _pendingPayload = null;
+    return p;
+  }
 
   Future<void> init() async {
     if (_initialized) return;
@@ -34,6 +45,10 @@ class NotificationService {
 
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: (response) {
+        _pendingPayload = response.payload;
+        onNotificationTap?.call(response.payload);
+      },
     );
 
     await _plugin
@@ -60,6 +75,13 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    if (Platform.isAndroid) {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestExactAlarmsPermission();
+    }
   }
 
   Future<void> scheduleReminder({
@@ -67,29 +89,33 @@ class NotificationService {
     required DateTime when,
     required String title,
     required String body,
+    String? payload,
   }) async {
     final scheduled = tz.TZDateTime.from(when, tz.local);
     if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduled,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDesc,
-          importance: Importance.high,
-          priority: Priority.high,
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduled,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDesc,
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (_) {}
   }
 
   Future<void> cancelAll() => _plugin.cancelAll();

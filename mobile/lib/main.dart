@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/router/app_router.dart';
 import 'providers/locale_provider.dart';
 
 Future<void> main() async {
@@ -14,6 +15,8 @@ Future<void> main() async {
 
   final container = ProviderContainer();
   await container.read(localeProvider.notifier).loadSaved();
+
+  NotificationService.onNotificationTap = (_) {};
   await NotificationService.instance.init();
   await NotificationService.instance.requestPermissions();
 
@@ -23,4 +26,11 @@ Future<void> main() async {
       child: const ReserviliApp(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final payload = NotificationService.instance.consumePendingPayload();
+    if (payload != null) {
+      appRouter.go('/reservations/details', extra: payload);
+    }
+  });
 }

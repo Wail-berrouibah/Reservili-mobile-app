@@ -36,6 +36,7 @@ class ReservationReminderScheduler {
         when: remindAt,
         title: t.reminderTitle,
         body: t.reservationEndsTomorrow(homeName),
+        payload: r.id,
       );
     }
   }
