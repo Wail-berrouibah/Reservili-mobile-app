@@ -26,7 +26,7 @@ class ReservationModel {
   });
 
   /// Number of nights for this reservation.
-  int get nights => checkOutDate.difference(checkInDate).inDays;
+  int get nights => checkOutDate.difference(checkInDate).inDays + 1;
 
   /// A reservation still blocks a home unless it is cancelled.
   bool get isActive => status != ReservationStatus.cancelled;

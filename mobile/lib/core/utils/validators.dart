@@ -8,7 +8,7 @@ class Validators {
       String? value, String requiredMsg, String invalidMsg) {
     if (value == null || value.trim().isEmpty) return requiredMsg;
     final cleaned = value.replaceAll(RegExp(r'[\s\-]'), '');
-    if (!RegExp(r'^\+?\d{8,15}$').hasMatch(cleaned)) return invalidMsg;
+    if (!RegExp(r'^\d{10}$').hasMatch(cleaned)) return invalidMsg;
     return null;
   }
 

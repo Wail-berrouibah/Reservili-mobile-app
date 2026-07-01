@@ -13,7 +13,7 @@ class AppDateUtils {
       DateFormat('EEEE dd MMMM yyyy').format(date);
 
   static int nightsBetween(DateTime checkIn, DateTime checkOut) =>
-      checkOut.difference(checkIn).inDays;
+      checkOut.difference(checkIn).inDays + 1;
 
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 

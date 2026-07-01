@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -16,9 +17,12 @@ Future<void> main() async {
   final container = ProviderContainer();
   await container.read(localeProvider.notifier).loadSaved();
 
-  NotificationService.onNotificationTap = (_) {};
-  await NotificationService.instance.init();
-  await NotificationService.instance.requestPermissions();
+  // Notifications only supported on Android/iOS
+  if (!kIsWeb) {
+    NotificationService.onNotificationTap = (_) {};
+    await NotificationService.instance.init();
+    await NotificationService.instance.requestPermissions();
+  }
 
   runApp(
     UncontrolledProviderScope(

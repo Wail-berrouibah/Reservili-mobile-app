@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reservili/generated/app_localizations.dart';
@@ -35,6 +36,7 @@ class _ReminderSync extends ConsumerWidget {
   const _ReminderSync({required this.child});
 
   void _sync(WidgetRef ref, AppLocalizations t) {
+    if (kIsWeb) return;
     final reservations = ref.read(reservationsProvider).asData?.value;
     final homes = ref.read(homesProvider).asData?.value;
     if (reservations != null && homes != null) {
@@ -51,6 +53,7 @@ class _ReminderSync extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     ref.listen(reservationsProvider, (_, __) => _sync(ref, t));
     ref.listen(homesProvider, (_, __) => _sync(ref, t));
+    _sync(ref, t);
     return child;
   }
 }

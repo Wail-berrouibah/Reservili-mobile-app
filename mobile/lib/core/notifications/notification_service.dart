@@ -118,6 +118,15 @@ class NotificationService {
     } catch (_) {}
   }
 
-  Future<void> cancelAll() => _plugin.cancelAll();
-  Future<void> cancel(int id) => _plugin.cancel(id);
+  Future<void> cancelAll() async {
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {}
+  }
+
+  Future<void> cancel(int id) async {
+    try {
+      await _plugin.cancel(id);
+    } catch (_) {}
+  }
 }
