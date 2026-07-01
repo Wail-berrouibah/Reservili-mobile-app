@@ -86,8 +86,11 @@ class _CreateReservationScreenState
         _snack(t.reservationCreated);
         context.pop();
       }
-    } catch (_) {
-      if (mounted) _snack(t.datesUnavailable);
+    } catch (e) {
+      final msg = e.toString().contains('GAP_NOT_ALLOWED')
+          ? t.gapWarning
+          : t.datesUnavailable;
+      if (mounted) _snack(msg);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -83,6 +83,18 @@
   "statusConfirmed": "مؤكَّدة",
   "statusCancelled": "ملغاة",
   "client": "العميل",
+  "calendar": "التقويم",
+  "chooseDate": "اختر تاريخًا",
+  "availableRooms": "{count} مسكن متاح",
+  "@availableRooms": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "occupiedRooms": "{count} مسكن مشغول",
+  "@occupiedRooms": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reservedDays": "الأيام المحجوزة",
+  "gapWarning": "لا يمكن ترك يوم فارغ بين حجزين.",
   "reminderTitle": "تذكير بالحجز",
   "reservationEndsTomorrow": "حجز {home} ينتهي غدًا",
   "@reservationEndsTomorrow": {

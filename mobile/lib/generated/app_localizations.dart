@@ -560,6 +560,42 @@ abstract class AppLocalizations {
   /// **'Client'**
   String get client;
 
+  /// No description provided for @calendar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Calendrier'**
+  String get calendar;
+
+  /// No description provided for @chooseDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une date'**
+  String get chooseDate;
+
+  /// No description provided for @availableRooms.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} logements disponibles'**
+  String availableRooms(int count);
+
+  /// No description provided for @occupiedRooms.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} logements occupés'**
+  String occupiedRooms(int count);
+
+  /// No description provided for @reservedDays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jours réservés'**
+  String get reservedDays;
+
+  /// No description provided for @gapWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de laisser un jour vide entre deux réservations.'**
+  String get gapWarning;
+
   /// No description provided for @reminderTitle.
   ///
   /// In fr, this message translates to:

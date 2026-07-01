@@ -244,6 +244,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get client => 'العميل';
 
   @override
+  String get calendar => 'التقويم';
+
+  @override
+  String get chooseDate => 'اختر تاريخًا';
+
+  @override
+  String availableRooms(int count) {
+    return '$count مسكن متاح';
+  }
+
+  @override
+  String occupiedRooms(int count) {
+    return '$count مسكن مشغول';
+  }
+
+  @override
+  String get reservedDays => 'الأيام المحجوزة';
+
+  @override
+  String get gapWarning => 'لا يمكن ترك يوم فارغ بين حجزين.';
+
+  @override
   String get reminderTitle => 'تذكير بالحجز';
 
   @override

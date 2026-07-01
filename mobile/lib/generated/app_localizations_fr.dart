@@ -246,6 +246,29 @@ class AppLocalizationsFr extends AppLocalizations {
   String get client => 'Client';
 
   @override
+  String get calendar => 'Calendrier';
+
+  @override
+  String get chooseDate => 'Choisir une date';
+
+  @override
+  String availableRooms(int count) {
+    return '$count logements disponibles';
+  }
+
+  @override
+  String occupiedRooms(int count) {
+    return '$count logements occupés';
+  }
+
+  @override
+  String get reservedDays => 'Jours réservés';
+
+  @override
+  String get gapWarning =>
+      'Impossible de laisser un jour vide entre deux réservations.';
+
+  @override
   String get reminderTitle => 'Rappel de réservation';
 
   @override

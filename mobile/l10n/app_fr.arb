@@ -83,6 +83,18 @@
   "statusConfirmed": "Confirmée",
   "statusCancelled": "Annulée",
   "client": "Client",
+  "calendar": "Calendrier",
+  "chooseDate": "Choisir une date",
+  "availableRooms": "{count} logements disponibles",
+  "@availableRooms": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "occupiedRooms": "{count} logements occupés",
+  "@occupiedRooms": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reservedDays": "Jours réservés",
+  "gapWarning": "Impossible de laisser un jour vide entre deux réservations.",
   "reminderTitle": "Rappel de réservation",
   "reservationEndsTomorrow": "La réservation de {home} se termine demain",
   "@reservationEndsTomorrow": {

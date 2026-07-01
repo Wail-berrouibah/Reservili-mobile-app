@@ -51,10 +51,13 @@ class _RescheduleReservationScreenState
         );
         context.pop();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final msg = e.toString().contains('GAP_NOT_ALLOWED')
+            ? t.gapWarning
+            : t.datesUnavailable;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.datesUnavailable)),
+          SnackBar(content: Text(msg)),
         );
       }
     } finally {

@@ -74,33 +74,41 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
             Text(t.quickActions, style: AppTextStyles.titleMedium),
             const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: QuickActionCard(
-                    icon: Icons.search,
-                    label: t.availability,
-                    onTap: () => context.push(AppRoutes.availability),
+              Row(
+                children: [
+                  Expanded(
+                    child: QuickActionCard(
+                      icon: Icons.calendar_month_outlined,
+                      label: t.calendar,
+                      onTap: () => context.push(AppRoutes.calendar),
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: QuickActionCard(
-                    icon: Icons.add_home_outlined,
-                    label: t.add,
-                    onTap: () => context.push(AppRoutes.addHome),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: QuickActionCard(
+                      icon: Icons.search,
+                      label: t.availability,
+                      onTap: () => context.push(AppRoutes.availability),
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: QuickActionCard(
-                    icon: Icons.list_alt_outlined,
-                    label: t.reservations,
-                    onTap: () => context.push(AppRoutes.reservations),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: QuickActionCard(
+                      icon: Icons.add_home_outlined,
+                      label: t.add,
+                      onTap: () => context.push(AppRoutes.addHome),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: QuickActionCard(
+                      icon: Icons.list_alt_outlined,
+                      label: t.reservations,
+                      onTap: () => context.push(AppRoutes.reservations),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: AppSpacing.xl),
             Text(t.recentReservations, style: AppTextStyles.titleMedium),
             const SizedBox(height: AppSpacing.md),

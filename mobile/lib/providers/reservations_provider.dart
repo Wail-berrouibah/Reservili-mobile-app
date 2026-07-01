@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../shared/models/home_model.dart';
 import '../shared/models/reservation_model.dart';
 import 'guests_provider.dart';
+import 'homes_provider.dart';
 import 'repository_provider.dart';
 
 class DateRange {
@@ -84,4 +85,25 @@ final availableHomesProvider =
     FutureProvider.family<List<HomeModel>, DateRange>((ref, range) async {
   final repo = ref.read(repositoryProvider);
   return repo.getAvailableHomes(range.checkIn, range.checkOut);
+});
+
+/// Structured calendar data: homeId → (date → active reservation or null if void).
+class CalendarData {
+  final Map<String, Map<DateTime, ReservationModel?>> entries;
+  final List<HomeModel> homes;
+
+  const CalendarData({required this.entries, required this.homes});
+}
+
+final calendarProvider =
+    FutureProvider.family<CalendarData, DateTime>((ref, month) async {
+  final repo = ref.read(repositoryProvider);
+  final homes = await ref.watch(homesProvider.future);
+  final monthStart = DateTime(month.year, month.month, 1);
+  final monthEnd = DateTime(month.year, month.month + 1, 0);
+  final data = await repo.getCalendarData(
+    monthStart: monthStart,
+    monthEnd: monthEnd,
+  );
+  return CalendarData(entries: data, homes: homes);
 });
