@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:reservili/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -13,6 +11,7 @@ import '../../providers/homes_provider.dart';
 import '../../providers/reservations_provider.dart';
 import '../../shared/models/reservation_model.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/reservation_date_picker.dart';
 import '../../shared/widgets/soft_card.dart';
 
 class HomeDetailsScreen extends ConsumerWidget {
@@ -50,7 +49,6 @@ class HomeDetailsScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final homesAsync = ref.watch(homesProvider);
     final reservationsAsync = ref.watch(reservationsProvider);
-    final now = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(title: Text(t.homeDetails)),
@@ -116,7 +114,7 @@ class HomeDetailsScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xl),
                   Text(t.reservedDays, style: AppTextStyles.titleMedium),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildReservedDaysCalendar(now, homeReservations, t),
+                  _buildMonthCalendars(homeReservations, t),
                   if (homeReservations.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.md),
                     ...homeReservations.map((r) => _reservationTile(context, r, t)),
@@ -156,12 +154,29 @@ class HomeDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReservedDaysCalendar(
-    DateTime now,
+  Set<DateTime> _computeReservedDates(List<ReservationModel> reservations) {
+    final dates = <DateTime>{};
+    for (final r in reservations) {
+      var d = DateTime(
+        r.checkInDate.year,
+        r.checkInDate.month,
+        r.checkInDate.day,
+      );
+      while (d.isBefore(r.checkOutDate)) {
+        dates.add(d);
+        d = d.add(const Duration(days: 1));
+      }
+    }
+    return dates;
+  }
+
+  Widget _buildMonthCalendars(
     List<ReservationModel> reservations,
     AppLocalizations t,
   ) {
-    final today = DateTime(now.year, now.month, now.day);
+    final reservedDates = _computeReservedDates(reservations);
+    final now = DateTime.now();
+    final monthsToShow = 3;
 
     if (reservations.isEmpty) {
       return SoftCard(
@@ -175,79 +190,21 @@ class HomeDetailsScreen extends ConsumerWidget {
       );
     }
 
-    final startDate = today.subtract(const Duration(days: 15));
-    final endDate = today.add(const Duration(days: 45));
-    final dayCount = endDate.difference(startDate).inDays + 1;
-
-    final occupiedDates = <DateTime>{};
-    for (final r in reservations) {
-      var d = DateTime(
-        r.checkInDate.year,
-        r.checkInDate.month,
-        r.checkInDate.day,
-      );
-      while (d.isBefore(r.checkOutDate)) {
-        if (!d.isBefore(startDate) && !d.isAfter(endDate)) {
-          occupiedDates.add(d);
-        }
-        d = d.add(const Duration(days: 1));
-      }
-    }
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${DateFormat('dd MMM').format(startDate)} → ${DateFormat('dd MMM').format(endDate)}',
-          style: AppTextStyles.label,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: dayCount,
-            separatorBuilder: (_, __) => const SizedBox(width: 2),
-            itemBuilder: (_, i) {
-              final day = startDate.add(Duration(days: i));
-              final isOccupied = occupiedDates.contains(day);
-              final isPast = day.isBefore(today);
-
-              return Container(
-                width: 32,
-                decoration: BoxDecoration(
-                  color: isOccupied
-                      ? (isPast
-                          ? AppColors.confirmed.withOpacity(0.5)
-                          : AppColors.confirmed)
-                      : AppColors.card,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: day == today ? AppColors.accent : AppColors.border,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: day == today
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                        color: isOccupied
-                            ? AppColors.textOnPrimary
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+      children: List.generate(monthsToShow, (i) {
+        final month = DateTime(now.year, now.month + i, 1);
+        return Padding(
+          padding: EdgeInsets.only(bottom: i < monthsToShow - 1 ? AppSpacing.lg : 0),
+          child: ReservationDatePicker(
+            key: ValueKey('month_$i'),
+            reservedDates: reservedDates,
+            selectable: false,
+            showLegend: true,
+            reservedAsOccupied: false,
+            initialMonth: month,
           ),
-        ),
-      ],
+        );
+      }),
     );
   }
 

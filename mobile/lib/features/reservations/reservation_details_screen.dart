@@ -127,10 +127,10 @@ class ReservationDetailsScreen extends ConsumerWidget {
               SoftCard(
                 child: Column(
                   children: [
-                    _row(t.arrival, AppDateUtils.formatFull(r.checkInDate)),
+                    _row(t.arrival, '${AppDateUtils.formatFull(r.checkInDate)} à ${AppDateUtils.formatTime(r.checkInDate)}'),
                     const Divider(height: AppSpacing.lg),
                     _row(t.departure,
-                        AppDateUtils.formatFull(r.checkOutDate)),
+                        '${AppDateUtils.formatFull(r.checkOutDate)} à ${AppDateUtils.formatTime(r.checkOutDate)}'),
                     const Divider(height: AppSpacing.lg),
                     _row(t.nights, '${r.nights}'),
                     const Divider(height: AppSpacing.lg),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/date_utils.dart';
 import '../models/reservation_model.dart';
 import 'soft_card.dart';
 import 'status_badge.dart';
@@ -23,7 +23,6 @@ class ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final df = DateFormat('dd MMM');
     return SoftCard(
       onTap: onTap,
       child: Column(
@@ -55,7 +54,7 @@ class ReservationCard extends StatelessWidget {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${df.format(reservation.checkInDate)} → ${df.format(reservation.checkOutDate)} · ${reservation.nights} nuits',
+                  '${AppDateUtils.formatDateTime(reservation.checkInDate)} → ${AppDateUtils.formatDateTime(reservation.checkOutDate)} · ${reservation.nights} nuits',
                   style: AppTextStyles.bodyMedium,
                 ),
               ),

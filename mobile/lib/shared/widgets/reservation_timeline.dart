@@ -18,7 +18,8 @@ class ReservationTimeline extends StatelessWidget {
   int get _nights {
     final inMidnight = DateTime(checkInDate.year, checkInDate.month, checkInDate.day);
     final outMidnight = DateTime(checkOutDate.year, checkOutDate.month, checkOutDate.day);
-    return outMidnight.difference(inMidnight).inDays + 1;
+    final days = outMidnight.difference(inMidnight).inDays;
+    return days > 0 ? days : 1;
   }
 
   @override

@@ -26,7 +26,11 @@ class ReservationModel {
   });
 
   /// Number of nights for this reservation.
-  int get nights => checkOutDate.difference(checkInDate).inDays + 1;
+  int get nights {
+    final inDate = DateTime(checkInDate.year, checkInDate.month, checkInDate.day);
+    final outDate = DateTime(checkOutDate.year, checkOutDate.month, checkOutDate.day);
+    return outDate.difference(inDate).inDays;
+  }
 
   /// A reservation still blocks a home unless it is cancelled.
   bool get isActive => status != ReservationStatus.cancelled;

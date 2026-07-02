@@ -10,8 +10,10 @@ import '../../core/utils/date_utils.dart';
 import '../../core/utils/validators.dart';
 import '../../providers/homes_provider.dart';
 import '../../providers/reservations_provider.dart';
+import '../../shared/models/reservation_model.dart';
 import '../../shared/widgets/app_text_field.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/reservation_date_picker.dart';
 
 class CreateReservationScreen extends ConsumerStatefulWidget {
   final String? homeId;
@@ -32,7 +34,10 @@ class _CreateReservationScreenState
   final _notes = TextEditingController();
 
   String? _selectedHomeId;
-  DateTimeRange? _range;
+  DateTime? _selectedStart;
+  DateTime? _selectedEnd;
+  TimeOfDay _checkInTime = const TimeOfDay(hour: 12, minute: 0);
+  TimeOfDay _checkOutTime = const TimeOfDay(hour: 10, minute: 0);
   bool _saving = false;
 
   @override
@@ -51,20 +56,71 @@ class _CreateReservationScreenState
     super.dispose();
   }
 
-  Future<void> _pickRange() async {
-    final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 365)),
-      initialDateRange: _range,
-    );
-    if (picked != null) setState(() => _range = picked);
+  Set<DateTime> _computeReservedDates(List<ReservationModel> reservations) {
+    if (_selectedHomeId == null) return {};
+    final homeReservations =
+        reservations.where((r) => r.homeId == _selectedHomeId && r.isActive);
+    final dates = <DateTime>{};
+    for (final r in homeReservations) {
+      var d = DateTime(
+        r.checkInDate.year,
+        r.checkInDate.month,
+        r.checkInDate.day,
+      );
+      while (d.isBefore(r.checkOutDate)) {
+        dates.add(d);
+        d = d.add(const Duration(days: 1));
+      }
+    }
+    return dates;
   }
+
+  void _onDayTap(DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (day.isBefore(today)) return;
+
+    if (_selectedStart == null || (_selectedStart != null && _selectedEnd != null)) {
+      _selectedStart = day;
+      _selectedEnd = null;
+    } else if (_selectedEnd == null) {
+      if (day.isBefore(_selectedStart!)) {
+        _selectedStart = day;
+        _selectedEnd = null;
+      } else {
+        _selectedEnd = day;
+      }
+    }
+    setState(() {});
+  }
+
+  Future<void> _pickCheckInTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _checkInTime,
+    );
+    if (picked != null) setState(() => _checkInTime = picked);
+  }
+
+  Future<void> _pickCheckOutTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _checkOutTime,
+    );
+    if (picked != null) setState(() => _checkOutTime = picked);
+  }
+
+  DateTime _combine(DateTime date, TimeOfDay time) => DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
 
   Future<void> _submit(AppLocalizations t) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_range == null) {
+    if (_selectedStart == null || _selectedEnd == null) {
       _snack(t.invalidDates);
       return;
     }
@@ -77,8 +133,8 @@ class _CreateReservationScreenState
             guestPhone: _phone.text.trim(),
             guestEmail:
                 _email.text.trim().isEmpty ? null : _email.text.trim(),
-            checkIn: _range!.start,
-            checkOut: _range!.end,
+            checkIn: _combine(_selectedStart!, _checkInTime),
+            checkOut: _combine(_selectedEnd!, _checkOutTime),
             guestsCount: int.tryParse(_guests.text.trim()) ?? 1,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
           );
@@ -105,6 +161,7 @@ class _CreateReservationScreenState
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final homes = ref.watch(homesProvider).asData?.value ?? [];
+    final reservationsAsync = ref.watch(reservationsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.newReservation)),
@@ -131,38 +188,63 @@ class _CreateReservationScreenState
                         child: Text(h.name),
                       ))
                   .toList(),
-              onChanged: (v) => setState(() => _selectedHomeId = v),
+              onChanged: (v) {
+                setState(() {
+                  _selectedHomeId = v;
+                  _selectedStart = null;
+                  _selectedEnd = null;
+                });
+              },
               validator: (v) => v == null ? t.chooseHome : null,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            InkWell(
-              onTap: _pickRange,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_month_outlined,
-                        color: AppColors.primary),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        _range == null
-                            ? t.chooseDates
-                            : AppDateUtils.rangeLabel(
-                                _range!.start, _range!.end),
-                        style: AppTextStyles.bodyLarge,
-                      ),
-                    ),
-                  ],
-                ),
+            if (_selectedHomeId != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              reservationsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('$e')),
+                data: (reservations) {
+                  final reservedDates = _computeReservedDates(reservations);
+                  return ReservationDatePicker(
+                    reservedDates: reservedDates,
+                    selectedStart: _selectedStart,
+                    selectedEnd: _selectedEnd,
+                    onDayTap: _onDayTap,
+                    selectable: true,
+                    showLegend: true,
+                    reservedAsOccupied: true,
+                  );
+                },
               ),
-            ),
+              if (_selectedStart != null && _selectedEnd != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Center(
+                  child: Text(
+                    AppDateUtils.rangeLabel(_selectedStart!, _selectedEnd!),
+                    style: AppTextStyles.bodyLarge,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: _TimeTile(
+                      label: t.arrival,
+                      time: _checkInTime,
+                      onTap: _pickCheckInTime,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _TimeTile(
+                      label: t.departure,
+                      time: _checkOutTime,
+                      onTap: _pickCheckOutTime,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             AppTextField(
               label: t.guestName,
@@ -203,6 +285,42 @@ class _CreateReservationScreenState
               loading: _saving,
               onPressed: () => _submit(t),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TimeTile extends StatelessWidget {
+  final String label;
+  final TimeOfDay time;
+  final VoidCallback onTap;
+
+  const _TimeTile({
+    required this.label,
+    required this.time,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final display = time.format(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(label, style: AppTextStyles.label),
+            const SizedBox(height: AppSpacing.xs),
+            Text(display, style: AppTextStyles.bodyLarge),
           ],
         ),
       ),
