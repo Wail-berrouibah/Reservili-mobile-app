@@ -135,6 +135,8 @@ class ReservationDetailsScreen extends ConsumerWidget {
                     _row(t.nights, '${r.nights}'),
                     const Divider(height: AppSpacing.lg),
                     _row(t.personsLabel, '${r.guestsCount}'),
+                    const Divider(height: AppSpacing.lg),
+                    _row('Prix payé', '${r.paidPrice.toStringAsFixed(0)} DA'),
                     if (r.notes != null && r.notes!.isNotEmpty) ...[
                       const Divider(height: AppSpacing.lg),
                       _row(t.notes, r.notes!),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reservili/generated/app_localizations.dart';
 
@@ -25,8 +26,19 @@ class ReserviliApp extends ConsumerWidget {
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      builder: (context, child) =>
-          _ReminderSync(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent || event is KeyRepeatEvent) {
+            if (event.character == null &&
+                event.logicalKey == LogicalKeyboardKey.pageDown) {
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: _ReminderSync(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

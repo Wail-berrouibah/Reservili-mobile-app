@@ -47,14 +47,16 @@ class MockData {
 
   static List<ReservationModel> reservations() {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     return [
       ReservationModel(
         id: 'r1',
         homeId: 'h1',
         guestId: 'g1',
-        checkInDate: now.add(const Duration(days: 2)),
-        checkOutDate: now.add(const Duration(days: 5)),
+        checkInDate: today.add(const Duration(days: 2, hours: 12)),
+        checkOutDate: today.add(const Duration(days: 5, hours: 10)),
         guestsCount: 4,
+        paidPrice: 48000,
         status: ReservationStatus.confirmed,
         notes: 'Arrivée tôt le matin.',
         createdAt: now,
@@ -64,9 +66,10 @@ class MockData {
         id: 'r2',
         homeId: 'h2',
         guestId: 'g2',
-        checkInDate: now.add(const Duration(days: 7)),
-        checkOutDate: now.add(const Duration(days: 9)),
+        checkInDate: today.add(const Duration(days: 7, hours: 12)),
+        checkOutDate: today.add(const Duration(days: 9, hours: 10)),
         guestsCount: 2,
+        paidPrice: 17000,
         status: ReservationStatus.pending,
         createdAt: now,
         updatedAt: now,

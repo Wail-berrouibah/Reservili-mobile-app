@@ -9,6 +9,7 @@ class ReservationModel {
   final int guestsCount;
   final ReservationStatus status;
   final String? notes;
+  final double paidPrice;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -21,6 +22,7 @@ class ReservationModel {
     required this.guestsCount,
     this.status = ReservationStatus.pending,
     this.notes,
+    required this.paidPrice,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -54,6 +56,7 @@ class ReservationModel {
           orElse: () => ReservationStatus.pending,
         ),
         notes: json['notes'] as String?,
+        paidPrice: (json['paidPrice'] as num).toDouble(),
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
@@ -67,6 +70,7 @@ class ReservationModel {
         'guestsCount': guestsCount,
         'status': status.name,
         'notes': notes,
+        'paidPrice': paidPrice,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -80,6 +84,7 @@ class ReservationModel {
     int? guestsCount,
     ReservationStatus? status,
     String? notes,
+    double? paidPrice,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -92,6 +97,7 @@ class ReservationModel {
       guestsCount: guestsCount ?? this.guestsCount,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      paidPrice: paidPrice ?? this.paidPrice,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

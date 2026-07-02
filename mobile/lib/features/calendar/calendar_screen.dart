@@ -42,6 +42,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final calendarAsync = ref.watch(calendarProvider(_currentMonth));
+    final reservationsAsync = ref.watch(reservationsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.calendar)),
@@ -53,10 +54,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('$e')),
               data: (data) {
+                final checkOutDates = reservationsAsync.maybeWhen(
+                  data: (reservations) {
+                    final map = <String, Set<DateTime>>{};
+                    for (final r in reservations.where((r) => r.isActive)) {
+                      map.putIfAbsent(r.homeId, () => <DateTime>{})
+                          .add(DateTime(r.checkOutDate.year, r.checkOutDate.month, r.checkOutDate.day));
+                    }
+                    return map;
+                  },
+                  orElse: () => <String, Set<DateTime>>{},
+                );
                 return BookingCalendarWidget(
                   homes: data.homes,
                   entries: data.entries,
                   month: _currentMonth,
+                  checkOutDates: checkOutDates,
                   onReservationTap: (reservation) =>
                       context.push(AppRoutes.reservationDetails, extra: reservation.id),
                 );

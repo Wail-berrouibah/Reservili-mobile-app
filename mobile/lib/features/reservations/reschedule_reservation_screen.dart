@@ -79,6 +79,11 @@ class _RescheduleReservationScreenState
         time.minute,
       );
 
+  DateTime _resolveCheckOut() {
+    if (_range == null) return _combine(DateTime.now(), _checkOutTime);
+    return _combine(_range!.end.add(const Duration(days: 1)), _checkOutTime);
+  }
+
   Future<void> _submit(AppLocalizations t) async {
     if (_range == null) return;
     setState(() => _saving = true);
@@ -86,7 +91,7 @@ class _RescheduleReservationScreenState
       await ref.read(reservationsProvider.notifier).reschedule(
             widget.reservationId,
             _combine(_range!.start, _checkInTime),
-            _combine(_range!.end, _checkOutTime),
+            _resolveCheckOut(),
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -95,16 +100,63 @@ class _RescheduleReservationScreenState
         context.pop();
       }
     } catch (e) {
-      if (mounted) {
-        final msg = e.toString().contains('GAP_NOT_ALLOWED')
-            ? t.gapWarning
-            : t.datesUnavailable;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      }
-    } finally {
       if (mounted) setState(() => _saving = false);
+      if (e.toString().contains('GAP_NOT_ALLOWED')) {
+        if (!mounted) return;
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Jour non réservé'),
+            content: const Text(
+                'Il y a un jour vide entre cette réservation et une autre. Voulez-vous continuer ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(t.no),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Continuer'),
+              ),
+            ],
+          ),
+        );
+        if (ok == true) {
+          setState(() => _saving = true);
+          try {
+            await ref.read(reservationsProvider.notifier).reschedule(
+                  widget.reservationId,
+                  _combine(_range!.start, _checkInTime),
+                  _resolveCheckOut(),
+                  allowGap: true,
+                );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(t.reservationRescheduled)),
+              );
+              context.pop();
+            }
+          } catch (e2) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e2.toString().contains('DATES_UNAVAILABLE')
+                      ? t.datesUnavailable
+                      : '${e2}'),
+                ),
+              );
+            }
+          } finally {
+            if (mounted) setState(() => _saving = false);
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(t.datesUnavailable)),
+          );
+        }
+      }
     }
   }
 

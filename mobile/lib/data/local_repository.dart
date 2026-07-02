@@ -71,6 +71,11 @@ class LocalRepository {
       r.checkInDate.isBefore(checkOut) &&
       r.checkOutDate.isAfter(checkIn);
 
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   bool _hasGap(
     List<ReservationModel> existing,
     DateTime checkIn,
@@ -82,13 +87,9 @@ class LocalRepository {
         .toList()
       ..sort((a, b) => a.checkInDate.compareTo(b.checkInDate));
 
-    for (final r in sorted) {
-      if (r.checkOutDate.isBefore(checkIn) || r.checkInDate.isAfter(checkOut)) {
-        continue;
-      }
-    }
-
-    final before = sorted.where((r) => r.checkOutDate.isBefore(checkIn)).toList()
+    final before = sorted
+        .where((r) => _dateOnly(r.checkOutDate).isBefore(_dateOnly(checkIn)))
+        .toList()
       ..sort((a, b) => b.checkOutDate.compareTo(a.checkOutDate));
     if (before.isNotEmpty) {
       final prev = before.first;
@@ -97,7 +98,9 @@ class LocalRepository {
       }
     }
 
-    final after = sorted.where((r) => r.checkInDate.isAfter(checkOut)).toList()
+    final after = sorted
+        .where((r) => _dateOnly(r.checkInDate).isAfter(_dateOnly(checkOut)))
+        .toList()
       ..sort((a, b) => a.checkInDate.compareTo(b.checkInDate));
     if (after.isNotEmpty) {
       final next = after.first;
@@ -108,9 +111,6 @@ class LocalRepository {
 
     return false;
   }
-
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -149,6 +149,9 @@ class LocalRepository {
   Future<void> deleteHome(String id) async {
     final homes = _readHomes()..removeWhere((h) => h.id == id);
     _writeHomes(homes);
+    final reservations = _readReservations()
+      ..removeWhere((r) => r.homeId == id);
+    _writeReservations(reservations);
   }
 
   // ---------- Reservations ----------
@@ -164,16 +167,20 @@ class LocalRepository {
     required DateTime checkOut,
     required int guestsCount,
     String? notes,
+    double paidPrice = 0,
+    bool allowGap = false,
   }) async {
     final reservations = _readReservations();
     final taken = reservations
         .any((r) => r.homeId == homeId && _overlaps(r, checkIn, checkOut));
     if (taken) throw Exception('DATES_UNAVAILABLE');
 
-    final homeReservations =
-        reservations.where((r) => r.homeId == homeId).toList();
-    if (_hasGap(homeReservations, checkIn, checkOut, null)) {
-      throw Exception('GAP_NOT_ALLOWED');
+    if (!allowGap) {
+      final homeReservations =
+          reservations.where((r) => r.homeId == homeId).toList();
+      if (_hasGap(homeReservations, checkIn, checkOut, null)) {
+        throw Exception('GAP_NOT_ALLOWED');
+      }
     }
 
     final guest = GuestModel(
@@ -194,6 +201,7 @@ class LocalRepository {
       guestsCount: guestsCount,
       status: ReservationStatus.pending,
       notes: notes,
+      paidPrice: paidPrice,
       createdAt: now,
       updatedAt: now,
     );
@@ -217,6 +225,7 @@ class LocalRepository {
       guestsCount: r.guestsCount,
       status: status,
       notes: r.notes,
+      paidPrice: r.paidPrice,
       createdAt: r.createdAt,
       updatedAt: DateTime.now(),
     );
@@ -225,7 +234,8 @@ class LocalRepository {
   }
 
   Future<ReservationModel> reschedule(
-      String id, DateTime checkIn, DateTime checkOut) async {
+      String id, DateTime checkIn, DateTime checkOut,
+      {bool allowGap = false}) async {
     final reservations = _readReservations();
     final idx = reservations.indexWhere((r) => r.id == id);
     if (idx == -1) throw Exception('RESERVATION_NOT_FOUND');
@@ -236,10 +246,12 @@ class LocalRepository {
         _overlaps(r, checkIn, checkOut));
     if (taken) throw Exception('DATES_UNAVAILABLE');
 
-    final homeReservations =
-        reservations.where((r) => r.homeId == reservations[idx].homeId).toList();
-    if (_hasGap(homeReservations, checkIn, checkOut, id)) {
-      throw Exception('GAP_NOT_ALLOWED');
+    if (!allowGap) {
+      final homeReservations =
+          reservations.where((r) => r.homeId == reservations[idx].homeId).toList();
+      if (_hasGap(homeReservations, checkIn, checkOut, id)) {
+        throw Exception('GAP_NOT_ALLOWED');
+      }
     }
 
     final r = reservations[idx];
@@ -252,6 +264,7 @@ class LocalRepository {
       guestsCount: r.guestsCount,
       status: r.status,
       notes: r.notes,
+      paidPrice: r.paidPrice,
       createdAt: r.createdAt,
       updatedAt: DateTime.now(),
     );
@@ -285,8 +298,8 @@ class LocalRepository {
               r != null &&
               r.isActive &&
               r.homeId == home.id &&
-              !r.checkInDate.isAfter(day) &&
-              day.isBefore(r.checkOutDate),
+              !_dateOnly(r.checkInDate).isAfter(day) &&
+              _dateOnly(day).isBefore(_dateOnly(r.checkOutDate)),
           orElse: () => null,
         );
         homeMap[day] = covering;

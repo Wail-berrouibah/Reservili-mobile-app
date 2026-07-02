@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../shared/models/home_model.dart';
 import 'repository_provider.dart';
+import 'reservations_provider.dart';
 
 /// Loads and holds the list of homes.
 final homesProvider =
@@ -31,6 +32,7 @@ class HomesNotifier extends AsyncNotifier<List<HomeModel>> {
     final repo = ref.read(repositoryProvider);
     await repo.deleteHome(id);
     ref.invalidateSelf();
+    ref.invalidate(reservationsProvider);
     await future;
   }
 }

@@ -11,6 +11,7 @@ class BookingCalendarWidget extends StatelessWidget {
   final List<HomeModel> homes;
   final Map<String, Map<DateTime, ReservationModel?>> entries;
   final DateTime month;
+  final Map<String, Set<DateTime>> checkOutDates;
   final void Function(ReservationModel reservation)? onReservationTap;
   final int Function(String homeId, DateTime date)? voidCountBuilder;
 
@@ -19,6 +20,7 @@ class BookingCalendarWidget extends StatelessWidget {
     required this.homes,
     required this.entries,
     required this.month,
+    this.checkOutDates = const {},
     this.onReservationTap,
     this.voidCountBuilder,
   });
@@ -114,6 +116,8 @@ class BookingCalendarWidget extends StatelessWidget {
     final homeMap = entries[home.id];
     if (homeMap == null) return const SizedBox.shrink();
 
+    final homeCheckOuts = checkOutDates[home.id] ?? const <DateTime>{};
+
     return Row(
       children: [
         SizedBox(
@@ -132,19 +136,66 @@ class BookingCalendarWidget extends StatelessWidget {
         ...List.generate(days, (i) {
           final day = DateTime(month.year, month.month, i + 1);
           final reservation = homeMap[day];
-          return _buildCell(reservation, cellSize, day);
+          return _buildCell(reservation, cellSize, day, homeCheckOuts);
         }),
       ],
     );
   }
 
-  Widget _buildCell(ReservationModel? reservation, double cellSize, DateTime day) {
+  bool _matchesDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  Widget _buildCell(ReservationModel? reservation, double cellSize, DateTime day, Set<DateTime> homeCheckOuts) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final isCheckOut = homeCheckOuts.any((d) => _matchesDate(d, day));
+    final isToday = _matchesDate(day, today);
+
+    if (isCheckOut) {
+      return GestureDetector(
+        onTap: onReservationTap != null ? () => onReservationTap!(reservation!) : null,
+        child: Container(
+          width: cellSize,
+          height: cellSize,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isToday ? AppColors.accent : AppColors.border,
+              width: isToday ? 1.5 : 0.5,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(color: AppColors.card),
+                  ),
+                  Expanded(
+                    child: Container(
+                      color: AppColors.cancelled.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+              if (isToday)
+                Center(
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
 
     Color bgColor;
     Color? borderColor;
-    bool isToday = false;
 
     if (reservation != null) {
       switch (reservation.status) {
@@ -158,10 +209,6 @@ class BookingCalendarWidget extends StatelessWidget {
     } else {
       bgColor = AppColors.card;
       borderColor = AppColors.border;
-    }
-
-    if (day == today) {
-      isToday = true;
     }
 
     return GestureDetector(

@@ -32,6 +32,7 @@ class _CreateReservationScreenState
   final _email = TextEditingController();
   final _guests = TextEditingController(text: '1');
   final _notes = TextEditingController();
+  final _price = TextEditingController();
 
   String? _selectedHomeId;
   DateTime? _selectedStart;
@@ -53,6 +54,7 @@ class _CreateReservationScreenState
     _email.dispose();
     _guests.dispose();
     _notes.dispose();
+    _price.dispose();
     super.dispose();
   }
 
@@ -67,12 +69,30 @@ class _CreateReservationScreenState
         r.checkInDate.month,
         r.checkInDate.day,
       );
-      while (d.isBefore(r.checkOutDate)) {
+      final checkOutDay =
+          DateTime(r.checkOutDate.year, r.checkOutDate.month, r.checkOutDate.day);
+      while (d.isBefore(checkOutDay)) {
         dates.add(d);
         d = d.add(const Duration(days: 1));
       }
     }
     return dates;
+  }
+
+  Set<DateTime> _checkInDates(List<ReservationModel> reservations) {
+    if (_selectedHomeId == null) return {};
+    return reservations
+        .where((r) => r.homeId == _selectedHomeId && r.isActive)
+        .map((r) => DateTime(r.checkInDate.year, r.checkInDate.month, r.checkInDate.day))
+        .toSet();
+  }
+
+  Set<DateTime> _checkOutDates(List<ReservationModel> reservations) {
+    if (_selectedHomeId == null) return {};
+    return reservations
+        .where((r) => r.homeId == _selectedHomeId && r.isActive)
+        .map((r) => DateTime(r.checkOutDate.year, r.checkOutDate.month, r.checkOutDate.day))
+        .toSet();
   }
 
   void _onDayTap(DateTime day) {
@@ -118,6 +138,17 @@ class _CreateReservationScreenState
         time.minute,
       );
 
+  DateTime _resolveCheckOut() {
+    final end = _selectedEnd!;
+    return _combine(end.add(const Duration(days: 1)), _checkOutTime);
+  }
+
+  double _parsePrice() {
+    final text = _price.text.trim();
+    final cleaned = text.replaceAll(RegExp(r'[^\d.,]'), '').replaceAll(',', '.');
+    return double.tryParse(cleaned) ?? 0;
+  }
+
   Future<void> _submit(AppLocalizations t) async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedStart == null || _selectedEnd == null) {
@@ -134,21 +165,70 @@ class _CreateReservationScreenState
             guestEmail:
                 _email.text.trim().isEmpty ? null : _email.text.trim(),
             checkIn: _combine(_selectedStart!, _checkInTime),
-            checkOut: _combine(_selectedEnd!, _checkOutTime),
+            checkOut: _resolveCheckOut(),
             guestsCount: int.tryParse(_guests.text.trim()) ?? 1,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+            paidPrice: _parsePrice(),
           );
       if (mounted) {
         _snack(t.reservationCreated);
         context.pop();
       }
     } catch (e) {
-      final msg = e.toString().contains('GAP_NOT_ALLOWED')
-          ? t.gapWarning
-          : t.datesUnavailable;
-      if (mounted) _snack(msg);
-    } finally {
       if (mounted) setState(() => _saving = false);
+      if (e.toString().contains('GAP_NOT_ALLOWED')) {
+        if (!mounted) return;
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Jour non réservé'),
+            content: const Text(
+                'Il y a un jour vide entre cette réservation et une autre. Voulez-vous continuer ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(t.no),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Continuer'),
+              ),
+            ],
+          ),
+        );
+        if (ok == true) {
+          setState(() => _saving = true);
+          try {
+            await ref.read(reservationsProvider.notifier).createReservation(
+                  homeId: _selectedHomeId!,
+                  guestName: _name.text.trim(),
+                  guestPhone: _phone.text.trim(),
+                  guestEmail:
+                      _email.text.trim().isEmpty ? null : _email.text.trim(),
+                  checkIn: _combine(_selectedStart!, _checkInTime),
+                  checkOut: _resolveCheckOut(),
+                  guestsCount: int.tryParse(_guests.text.trim()) ?? 1,
+                  notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+                  paidPrice: _parsePrice(),
+                  allowGap: true,
+                );
+            if (mounted) {
+              _snack(t.reservationCreated);
+              context.pop();
+            }
+          } catch (e2) {
+            if (mounted) {
+              _snack(e2.toString().contains('DATES_UNAVAILABLE')
+                  ? t.datesUnavailable
+                  : '${e2}');
+            }
+          } finally {
+            if (mounted) setState(() => _saving = false);
+          }
+        }
+      } else {
+        if (mounted) _snack(t.datesUnavailable);
+      }
     }
   }
 
@@ -204,8 +284,12 @@ class _CreateReservationScreenState
                 error: (e, _) => Center(child: Text('$e')),
                 data: (reservations) {
                   final reservedDates = _computeReservedDates(reservations);
+                  final checkInDates = _checkInDates(reservations);
+                  final checkOutDates = _checkOutDates(reservations);
                   return ReservationDatePicker(
                     reservedDates: reservedDates,
+                    checkInDates: checkInDates,
+                    checkOutDates: checkOutDates,
                     selectedStart: _selectedStart,
                     selectedEnd: _selectedEnd,
                     onDayTap: _onDayTap,
@@ -272,6 +356,20 @@ class _CreateReservationScreenState
               controller: _guests,
               keyboardType: TextInputType.number,
               validator: (v) => Validators.positiveNumber(v, t.invalidValue),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              label: 'Prix payé (DA)',
+              controller: _price,
+              keyboardType: TextInputType.number,
+              hint: 'ex: 5000',
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Prix payé requis';
+                final cleaned = v.trim().replaceAll(RegExp(r'[^\d.,]'), '').replaceAll(',', '.');
+                final parsed = double.tryParse(cleaned);
+                if (parsed == null || parsed < 0) return 'Montant invalide';
+                return null;
+              },
             ),
             const SizedBox(height: AppSpacing.lg),
             AppTextField(

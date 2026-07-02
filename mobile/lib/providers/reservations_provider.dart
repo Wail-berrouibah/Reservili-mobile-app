@@ -41,6 +41,8 @@ class ReservationsNotifier extends AsyncNotifier<List<ReservationModel>> {
     required DateTime checkOut,
     required int guestsCount,
     String? notes,
+    required double paidPrice,
+    bool allowGap = false,
   }) async {
     final repo = ref.read(repositoryProvider);
     await repo.createReservation(
@@ -52,6 +54,8 @@ class ReservationsNotifier extends AsyncNotifier<List<ReservationModel>> {
       checkOut: checkOut,
       guestsCount: guestsCount,
       notes: notes,
+      paidPrice: paidPrice,
+      allowGap: allowGap,
     );
     ref.invalidate(guestsProvider);
     ref.invalidateSelf();
@@ -66,9 +70,10 @@ class ReservationsNotifier extends AsyncNotifier<List<ReservationModel>> {
   }
 
   Future<void> reschedule(
-      String id, DateTime checkIn, DateTime checkOut) async {
+      String id, DateTime checkIn, DateTime checkOut,
+      {bool allowGap = false}) async {
     final repo = ref.read(repositoryProvider);
-    await repo.reschedule(id, checkIn, checkOut);
+    await repo.reschedule(id, checkIn, checkOut, allowGap: allowGap);
     ref.invalidateSelf();
     await future;
   }

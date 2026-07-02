@@ -26,8 +26,9 @@ class ReservationTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     var nights = _nights;
     if (nights <= 0) nights = 1;
+    final totalSegments = nights + 1;
 
-    final segments = List.generate(nights, (i) {
+    final segments = List.generate(totalSegments, (i) {
       return DateTime(
         checkInDate.year,
         checkInDate.month,
@@ -45,7 +46,7 @@ class ReservationTimeline extends StatelessWidget {
             child: Row(
               children: segments.asMap().entries.map((entry) {
                 final idx = entry.key;
-                return Expanded(child: _buildSegment(idx, nights));
+                return Expanded(child: _buildSegment(idx, totalSegments));
               }).toList(),
             ),
           ),

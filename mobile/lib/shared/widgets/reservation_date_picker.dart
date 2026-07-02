@@ -6,6 +6,8 @@ import '../../core/theme/app_text_styles.dart';
 
 class ReservationDatePicker extends StatefulWidget {
   final Set<DateTime> reservedDates;
+  final Set<DateTime> checkInDates;
+  final Set<DateTime> checkOutDates;
   final DateTime? selectedStart;
   final DateTime? selectedEnd;
   final ValueChanged<DateTime>? onDayTap;
@@ -17,6 +19,8 @@ class ReservationDatePicker extends StatefulWidget {
   const ReservationDatePicker({
     super.key,
     required this.reservedDates,
+    this.checkInDates = const {},
+    this.checkOutDates = const {},
     this.selectedStart,
     this.selectedEnd,
     this.onDayTap,
@@ -122,33 +126,31 @@ class _ReservationDatePickerState extends State<ReservationDatePicker> {
 
     final cells = <Widget>[];
 
+    final cellWidth = (MediaQuery.of(context).size.width - 32) / 7;
+
     for (var i = 1; i < firstWeekday; i++) {
-      cells.add(const Expanded(child: SizedBox(height: 32)));
+      cells.add(SizedBox(width: cellWidth, height: 32));
     }
 
     for (var day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
-      cells.add(_buildDayCell(date, today));
+      cells.add(SizedBox(width: cellWidth, child: _buildDayCell(date, today)));
     }
 
-    return Wrap(
-      children: cells.map((c) => SizedBox(width: (MediaQuery.of(context).size.width - 32) / 7, child: c)).toList(),
-    );
+    return Wrap(children: cells);
   }
 
+  bool _matchesDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   Widget _buildDayCell(DateTime date, DateTime today) {
-    final isReserved = widget.reservedDates.any((d) =>
-        d.year == date.year && d.month == date.month && d.day == date.day);
+    final isReserved = widget.reservedDates.any((d) => _matchesDate(d, date));
+    final isCheckIn = widget.checkInDates.any((d) => _matchesDate(d, date));
+    final isCheckOut = widget.checkOutDates.any((d) => _matchesDate(d, date));
     final isPast = date.isBefore(today);
-    final isToday = date == today;
-    final isStart = widget.selectedStart != null &&
-        widget.selectedStart!.year == date.year &&
-        widget.selectedStart!.month == date.month &&
-        widget.selectedStart!.day == date.day;
-    final isEnd = widget.selectedEnd != null &&
-        widget.selectedEnd!.year == date.year &&
-        widget.selectedEnd!.month == date.month &&
-        widget.selectedEnd!.day == date.day;
+    final isToday = _matchesDate(date, today);
+    final isStart = widget.selectedStart != null && _matchesDate(widget.selectedStart!, date);
+    final isEnd = widget.selectedEnd != null && _matchesDate(widget.selectedEnd!, date);
     final inRange = widget.selectedStart != null &&
         widget.selectedEnd != null &&
         date.isAfter(widget.selectedStart!) &&
@@ -177,6 +179,8 @@ class _ReservationDatePickerState extends State<ReservationDatePicker> {
       textColor = AppColors.textPrimary;
     }
 
+    final split = (isCheckIn || isCheckOut) && !isPast && !isStart && !isEnd && !inRange;
+
     return GestureDetector(
       onTap: (!isPast && widget.selectable && !isReserved)
           ? () => widget.onDayTap?.call(date)
@@ -184,21 +188,41 @@ class _ReservationDatePickerState extends State<ReservationDatePicker> {
       child: Container(
         height: 32,
         decoration: BoxDecoration(
-          color: bgColor,
           border: Border.all(
             color: isToday ? AppColors.accent : AppColors.border,
             width: isToday ? 1.5 : 0.5,
           ),
         ),
-        child: Center(
-          child: Text(
-            '${date.day}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-              color: textColor,
+        child: Stack(
+          children: [
+            if (split)
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      color: isCheckIn ? bgColor : AppColors.card,
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      color: isCheckOut ? AppColors.cancelled.withValues(alpha: 0.85) : AppColors.card,
+                    ),
+                  ),
+                ],
+              )
+            else
+              Container(color: bgColor),
+            Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                  color: split ? AppColors.textPrimary : textColor,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

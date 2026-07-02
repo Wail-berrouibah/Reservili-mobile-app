@@ -157,17 +157,34 @@ class HomeDetailsScreen extends ConsumerWidget {
   Set<DateTime> _computeReservedDates(List<ReservationModel> reservations) {
     final dates = <DateTime>{};
     for (final r in reservations) {
+      if (!r.isActive) continue;
       var d = DateTime(
         r.checkInDate.year,
         r.checkInDate.month,
         r.checkInDate.day,
       );
-      while (d.isBefore(r.checkOutDate)) {
+      final checkOutDay =
+          DateTime(r.checkOutDate.year, r.checkOutDate.month, r.checkOutDate.day);
+      while (d.isBefore(checkOutDay)) {
         dates.add(d);
         d = d.add(const Duration(days: 1));
       }
     }
     return dates;
+  }
+
+  Set<DateTime> _checkInDates(List<ReservationModel> reservations) {
+    return reservations
+        .where((r) => r.isActive)
+        .map((r) => DateTime(r.checkInDate.year, r.checkInDate.month, r.checkInDate.day))
+        .toSet();
+  }
+
+  Set<DateTime> _checkOutDates(List<ReservationModel> reservations) {
+    return reservations
+        .where((r) => r.isActive)
+        .map((r) => DateTime(r.checkOutDate.year, r.checkOutDate.month, r.checkOutDate.day))
+        .toSet();
   }
 
   Widget _buildMonthCalendars(
@@ -195,14 +212,16 @@ class HomeDetailsScreen extends ConsumerWidget {
         final month = DateTime(now.year, now.month + i, 1);
         return Padding(
           padding: EdgeInsets.only(bottom: i < monthsToShow - 1 ? AppSpacing.lg : 0),
-          child: ReservationDatePicker(
-            key: ValueKey('month_$i'),
-            reservedDates: reservedDates,
-            selectable: false,
-            showLegend: true,
-            reservedAsOccupied: false,
-            initialMonth: month,
-          ),
+            child: ReservationDatePicker(
+              key: ValueKey('month_$i'),
+              reservedDates: reservedDates,
+              checkInDates: _checkInDates(reservations),
+              checkOutDates: _checkOutDates(reservations),
+              selectable: false,
+              showLegend: true,
+              reservedAsOccupied: false,
+              initialMonth: month,
+            ),
         );
       }),
     );
